@@ -37,6 +37,11 @@ impl<'a> HigilightMatchedText<'a> {
         self
     }
 
+    pub fn matched_range(mut self, start: usize, end: usize) -> Self {
+        self.matches = vec![Range::new(start, end)];
+        self
+    }
+
     pub fn not_matched_style(mut self, style: Style) -> Self {
         self.not_matched_style = style;
         self
@@ -59,8 +64,10 @@ impl<'a> HigilightMatchedText<'a> {
             spans.push(span);
             start = range.end;
         }
-        let span = Span::styled(&self.s[start..], self.not_matched_style);
-        spans.push(span);
+        if !self.s[start..].is_empty() {
+            let span = Span::styled(&self.s[start..], self.not_matched_style);
+            spans.push(span);
+        }
         spans
     }
 }
@@ -91,7 +98,7 @@ fn to_ranges(mut indices: Vec<usize>) -> Vec<Range> {
 
 #[cfg(test)]
 mod tests {
-    use ratatui::style::Color;
+    use ratatui::style::{Color, Modifier};
     use rstest::*;
 
     use super::*;
@@ -109,7 +116,7 @@ mod tests {
     }
 
     #[test]
-    fn test_highlight_matched_text() {
+    fn test_highlight_matched_text_matched_indices() {
         let s = "abcdefghijklmn";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
@@ -124,6 +131,43 @@ mod tests {
             Span::styled("i", not_matched_style),
             Span::styled("jk", matched_style),
             Span::styled("lmn", not_matched_style),
+        ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_highlight_matched_text_matched_range() {
+        let s = "abcdef";
+        let not_matched_style = Style::default();
+        let matched_style = Style::default().fg(Color::Red);
+        let actual = highlight_matched_text(s).matched_range(2, 4).into_spans();
+        let expected = vec![
+            Span::styled("ab", not_matched_style),
+            Span::styled("cd", matched_style),
+            Span::styled("ef", not_matched_style),
+        ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_highlight_matched_text_styles() {
+        let s = "abcdef";
+        let not_matched_style = Style::default()
+            .fg(Color::Gray)
+            .add_modifier(Modifier::ITALIC);
+        let matched_style = Style::default()
+            .fg(Color::Yellow)
+            .bg(Color::Blue)
+            .add_modifier(Modifier::BOLD);
+        let actual = highlight_matched_text(s)
+            .matched_indices(vec![0, 1, 5])
+            .not_matched_style(not_matched_style)
+            .matched_style(matched_style)
+            .into_spans();
+        let expected = vec![
+            Span::styled("ab", matched_style),
+            Span::styled("cde", not_matched_style),
+            Span::styled("f", matched_style),
         ];
         assert_eq!(actual, expected);
     }
