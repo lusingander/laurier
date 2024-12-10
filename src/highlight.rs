@@ -3,7 +3,7 @@ use ratatui::{
     text::Span,
 };
 
-pub fn highlight_matched_text(s: &str) -> HigilightMatchedText {
+pub fn highlight_matched_text(s: String) -> HigilightMatchedText {
     HigilightMatchedText {
         s,
         matches: Vec::new(),
@@ -13,12 +13,12 @@ pub fn highlight_matched_text(s: &str) -> HigilightMatchedText {
     }
 }
 
-pub struct HigilightMatchedText<'a> {
-    s: &'a str,
+pub struct HigilightMatchedText {
+    s: String,
     matches: Vec<Range>,
     not_matched_style: Style,
     matched_style: Style,
-    ellipsis: Option<&'a str>,
+    ellipsis: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,7 +33,7 @@ impl Range {
     }
 }
 
-impl<'a> HigilightMatchedText<'a> {
+impl HigilightMatchedText {
     pub fn matched_indices(mut self, indices: Vec<usize>) -> Self {
         self.matches = to_ranges(indices);
         self
@@ -54,23 +54,24 @@ impl<'a> HigilightMatchedText<'a> {
         self
     }
 
-    pub fn ellipsis(mut self, ellipsis: &'a str) -> Self {
+    pub fn ellipsis(mut self, ellipsis: String) -> Self {
         self.ellipsis = Some(ellipsis);
         self
     }
 
-    pub fn into_spans(self) -> Vec<Span<'a>> {
+    pub fn into_spans(self) -> Vec<Span<'static>> {
         let mut matches;
         let (s, matches) = if let Some(e) = self.ellipsis {
             matches = Vec::new();
             let el = e.len();
             let sl = self.s.len();
             for r in &self.matches {
-                if sl - el < r.end {
-                    if r.start < sl - el {
+                let l = sl.saturating_sub(el);
+                if l < r.end {
+                    if r.start < l {
                         matches.push(Range::new(r.start, sl));
                     } else {
-                        matches.push(Range::new(sl - el, sl));
+                        matches.push(Range::new(l, sl));
                     }
                     break;
                 } else {
@@ -86,15 +87,15 @@ impl<'a> HigilightMatchedText<'a> {
         let mut start = 0;
         for range in matches {
             if start < range.start {
-                let span = Span::styled(&s[start..range.start], self.not_matched_style);
+                let span = Span::styled(s[start..range.start].to_string(), self.not_matched_style);
                 spans.push(span);
             }
-            let span = Span::styled(&s[range.start..range.end], self.matched_style);
+            let span = Span::styled(s[range.start..range.end].to_string(), self.matched_style);
             spans.push(span);
             start = range.end;
         }
         if !&s[start..].is_empty() {
-            let span = Span::styled(&s[start..], self.not_matched_style);
+            let span = Span::styled(s[start..].to_string(), self.not_matched_style);
             spans.push(span);
         }
         spans
@@ -149,7 +150,7 @@ mod tests {
         let s = "abcdefghijklmn";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(s.into())
             .matched_indices(vec![2, 3, 4, 7, 9, 10]) // "cde", "h", "jk"
             .into_spans();
         let expected = vec![
@@ -169,7 +170,7 @@ mod tests {
         let s = "abcdef";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(s.into())
             .matched_range(2, 4) // "cd"
             .into_spans();
         let expected = vec![
@@ -190,7 +191,7 @@ mod tests {
             .fg(Color::Yellow)
             .bg(Color::Blue)
             .add_modifier(Modifier::BOLD);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(s.into())
             .matched_indices(vec![0, 1, 5]) // "ab", "f"
             .not_matched_style(not_matched_style)
             .matched_style(matched_style)
@@ -208,9 +209,9 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(s.into())
             .matched_indices(vec![3, 4, 5]) // "def"
-            .ellipsis("...")
+            .ellipsis("...".into())
             .into_spans();
         let expected = vec![
             Span::styled("abc", not_matched_style),
@@ -225,9 +226,9 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(s.into())
             .matched_indices(vec![3, 4, 5, 6]) // "def."
-            .ellipsis("...")
+            .ellipsis("...".into())
             .into_spans();
         let expected = vec![
             Span::styled("abc", not_matched_style),
@@ -241,9 +242,9 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(s.into())
             .matched_indices(vec![0, 1, 7, 10, 11]) // "ab", ".", "??"
-            .ellipsis("...")
+            .ellipsis("...".into())
             .into_spans();
         let expected = vec![
             Span::styled("ab", matched_style),
@@ -258,9 +259,9 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(s.into())
             .matched_indices(vec![3, 4, 5, 9, 10, 11]) // "def", "???"
-            .ellipsis("...")
+            .ellipsis("...".into())
             .into_spans();
         let expected = vec![
             Span::styled("abc", not_matched_style),
