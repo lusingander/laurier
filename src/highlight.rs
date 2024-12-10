@@ -102,13 +102,11 @@ impl HigilightMatchedText {
     }
 }
 
-fn to_ranges(mut indices: Vec<usize>) -> Vec<Range> {
+fn to_ranges(indices: Vec<usize>) -> Vec<Range> {
     if indices.is_empty() {
         return Vec::new();
     }
-
-    indices.sort_unstable();
-    indices.dedup();
+    let indices = sort_and_dedup(indices);
 
     let mut ranges = Vec::new();
     let mut start = indices[0];
@@ -124,6 +122,12 @@ fn to_ranges(mut indices: Vec<usize>) -> Vec<Range> {
     }
     ranges.push(Range::new(start, end));
     ranges
+}
+
+fn sort_and_dedup(mut indices: Vec<usize>) -> Vec<usize> {
+    indices.sort_unstable();
+    indices.dedup();
+    indices
 }
 
 #[cfg(test)]
