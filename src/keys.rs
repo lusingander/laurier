@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! key_code {
-    ( $code:path ) => {
+    ( $code:pat ) => {
         ratatui::crossterm::event::KeyEvent { code: $code, .. }
     };
 }
@@ -37,6 +37,9 @@ mod tests {
         let e = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
         assert!(matches!(e, key_code!(KeyCode::Esc)));
         assert!(!matches!(e, key_code!(KeyCode::Enter)));
+
+        let e = KeyEvent::new(KeyCode::F(1), KeyModifiers::NONE);
+        assert!(matches!(e, key_code!(KeyCode::F(1))));
     }
 
     #[test]
