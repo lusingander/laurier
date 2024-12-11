@@ -2,6 +2,15 @@
 name = "laurier"
 version = "0.1.0"
 edition = "2021"
+description = "ratatui helper library"
+authors = ["Kyosuke Fujimoto <kyoro.f@gmail.com>"]
+documentation = "https://docs.rs/laurier/"
+homepage = "https://github.com/lusingander/laurier"
+repository = "https://github.com/lusingander/laurier"
+readme = "README.md"
+license = "MIT"
+keywords = []
+categories = []
 
 [dependencies]
 ratatui = "0.29.0"
