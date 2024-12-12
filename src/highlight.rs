@@ -3,9 +3,9 @@ use ratatui::{
     text::Span,
 };
 
-pub fn highlight_matched_text(s: String) -> HigilightMatchedText {
+pub fn highlight_matched_text(s: impl Into<String>) -> HigilightMatchedText {
     HigilightMatchedText {
-        s,
+        s: s.into(),
         matches: Vec::new(),
         not_matched_style: Style::default(),
         matched_style: Style::default().fg(Color::Red),
@@ -54,8 +54,8 @@ impl HigilightMatchedText {
         self
     }
 
-    pub fn ellipsis(mut self, ellipsis: String) -> Self {
-        self.ellipsis = Some(ellipsis);
+    pub fn ellipsis(mut self, ellipsis: impl Into<String>) -> Self {
+        self.ellipsis = Some(ellipsis.into());
         self
     }
 
@@ -154,7 +154,7 @@ mod tests {
         let s = "abcdefghijklmn";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s.into())
+        let actual = highlight_matched_text(s)
             .matched_indices(vec![2, 3, 4, 7, 9, 10]) // "cde", "h", "jk"
             .into_spans();
         let expected = vec![
@@ -174,7 +174,7 @@ mod tests {
         let s = "abcdef";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s.into())
+        let actual = highlight_matched_text(s)
             .matched_range(2, 4) // "cd"
             .into_spans();
         let expected = vec![
@@ -195,7 +195,7 @@ mod tests {
             .fg(Color::Yellow)
             .bg(Color::Blue)
             .add_modifier(Modifier::BOLD);
-        let actual = highlight_matched_text(s.into())
+        let actual = highlight_matched_text(s)
             .matched_indices(vec![0, 1, 5]) // "ab", "f"
             .not_matched_style(not_matched_style)
             .matched_style(matched_style)
@@ -213,9 +213,9 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s.into())
+        let actual = highlight_matched_text(s)
             .matched_indices(vec![3, 4, 5]) // "def"
-            .ellipsis("...".into())
+            .ellipsis("...")
             .into_spans();
         let expected = vec![
             Span::styled("abc", not_matched_style),
@@ -230,9 +230,9 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s.into())
+        let actual = highlight_matched_text(s)
             .matched_indices(vec![3, 4, 5, 6]) // "def."
-            .ellipsis("...".into())
+            .ellipsis("...")
             .into_spans();
         let expected = vec![
             Span::styled("abc", not_matched_style),
@@ -246,9 +246,9 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s.into())
+        let actual = highlight_matched_text(s)
             .matched_indices(vec![0, 1, 7, 10, 11]) // "ab", ".", "??"
-            .ellipsis("...".into())
+            .ellipsis("...")
             .into_spans();
         let expected = vec![
             Span::styled("ab", matched_style),
@@ -263,9 +263,9 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s.into())
+        let actual = highlight_matched_text(s)
             .matched_indices(vec![3, 4, 5, 9, 10, 11]) // "def", "???"
-            .ellipsis("...".into())
+            .ellipsis("...")
             .into_spans();
         let expected = vec![
             Span::styled("abc", not_matched_style),
