@@ -1,18 +1,13 @@
-use ratatui::{
-    style::{Color, Style},
-    text::Span,
-};
+use ratatui::{style::Style, text::Span};
 
 pub fn highlight_matched_text(s: impl Into<String>) -> HigilightMatchedText {
     HigilightMatchedText {
         s: s.into(),
-        matches: Vec::new(),
-        not_matched_style: Style::default(),
-        matched_style: Style::default().fg(Color::Red),
-        ellipsis: None,
+        ..Default::default()
     }
 }
 
+#[derive(Default)]
 pub struct HigilightMatchedText {
     s: String,
     matches: Vec<Range>,
