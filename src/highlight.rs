@@ -180,19 +180,17 @@ mod tests {
     #[test]
     fn test_highlight_matched_text_matched_indices() {
         let s = "abcdefghijklmn";
-        let not_matched_style = Style::default();
-        let matched_style = Style::default().fg(Color::Red);
         let actual = highlight_matched_text(s)
             .matched_indices(vec![2, 3, 4, 7, 9, 10]) // "cde", "h", "jk"
             .into_spans();
         let expected = vec![
-            Span::styled("ab", not_matched_style),
-            Span::styled("cde", matched_style),
-            Span::styled("fg", not_matched_style),
-            Span::styled("h", matched_style),
-            Span::styled("i", not_matched_style),
-            Span::styled("jk", matched_style),
-            Span::styled("lmn", not_matched_style),
+            Span::raw("ab"),
+            Span::raw("cde"),
+            Span::raw("fg"),
+            Span::raw("h"),
+            Span::raw("i"),
+            Span::raw("jk"),
+            Span::raw("lmn"),
         ];
         assert_eq!(actual, expected);
     }
@@ -200,16 +198,10 @@ mod tests {
     #[test]
     fn test_highlight_matched_text_matched_range() {
         let s = "abcdef";
-        let not_matched_style = Style::default();
-        let matched_style = Style::default().fg(Color::Red);
         let actual = highlight_matched_text(s)
             .matched_range(2, 4) // "cd"
             .into_spans();
-        let expected = vec![
-            Span::styled("ab", not_matched_style),
-            Span::styled("cd", matched_style),
-            Span::styled("ef", not_matched_style),
-        ];
+        let expected = vec![Span::raw("ab"), Span::raw("cd"), Span::raw("ef")];
         assert_eq!(actual, expected);
     }
 
@@ -243,6 +235,8 @@ mod tests {
         let matched_style = Style::default().fg(Color::Red);
         let actual = highlight_matched_text(s)
             .matched_indices(vec![3, 4, 5]) // "def"
+            .not_matched_style(not_matched_style)
+            .matched_style(matched_style)
             .ellipsis("...")
             .into_spans();
         let expected = vec![
@@ -260,6 +254,8 @@ mod tests {
         let matched_style = Style::default().fg(Color::Red);
         let actual = highlight_matched_text(s)
             .matched_indices(vec![3, 4, 5, 6]) // "def."
+            .not_matched_style(not_matched_style)
+            .matched_style(matched_style)
             .ellipsis("...")
             .into_spans();
         let expected = vec![
@@ -276,6 +272,8 @@ mod tests {
         let matched_style = Style::default().fg(Color::Red);
         let actual = highlight_matched_text(s)
             .matched_indices(vec![0, 1, 7, 10, 11]) // "ab", ".", "??"
+            .not_matched_style(not_matched_style)
+            .matched_style(matched_style)
             .ellipsis("...")
             .into_spans();
         let expected = vec![
@@ -293,6 +291,8 @@ mod tests {
         let matched_style = Style::default().fg(Color::Red);
         let actual = highlight_matched_text(s)
             .matched_indices(vec![3, 4, 5, 9, 10, 11]) // "def", "???"
+            .not_matched_style(not_matched_style)
+            .matched_style(matched_style)
             .ellipsis("...")
             .into_spans();
         let expected = vec![
