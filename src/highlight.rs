@@ -1,4 +1,7 @@
-use ratatui::{style::Style, text::Span};
+use ratatui::{
+    style::{Color, Modifier, Style},
+    text::Span,
+};
 
 pub fn highlight_matched_text(s: impl Into<String>) -> HigilightMatchedText {
     HigilightMatchedText {
@@ -44,8 +47,38 @@ impl HigilightMatchedText {
         self
     }
 
+    pub fn not_matched_fg(mut self, color: Color) -> Self {
+        self.not_matched_style = self.not_matched_style.fg(color);
+        self
+    }
+
+    pub fn not_matched_bg(mut self, color: Color) -> Self {
+        self.not_matched_style = self.not_matched_style.bg(color);
+        self
+    }
+
+    pub fn not_matched_modifier(mut self, modifier: Modifier) -> Self {
+        self.not_matched_style = self.not_matched_style.add_modifier(modifier);
+        self
+    }
+
     pub fn matched_style(mut self, style: Style) -> Self {
         self.matched_style = style;
+        self
+    }
+
+    pub fn matched_fg(mut self, color: Color) -> Self {
+        self.matched_style = self.matched_style.fg(color);
+        self
+    }
+
+    pub fn matched_bg(mut self, color: Color) -> Self {
+        self.matched_style = self.matched_style.bg(color);
+        self
+    }
+
+    pub fn matched_modifier(mut self, modifier: Modifier) -> Self {
+        self.matched_style = self.matched_style.add_modifier(modifier);
         self
     }
 
