@@ -302,4 +302,66 @@ mod tests {
         ];
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn test_highlight_with_spans_no_style() {
+        let s = vec![Span::raw("abc"), Span::raw("def"), Span::raw("ghi")];
+        let actual = highlight_matched_text(s)
+            .matched_indices(vec![1, 2, 5, 6]) // "bc", "fg"
+            .into_spans();
+        let expected = vec![
+            Span::raw("a"),
+            Span::raw("bc"),
+            Span::raw("de"),
+            Span::raw("f"),
+            Span::raw("g"),
+            Span::raw("hi"),
+        ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_highlight_with_spans_with_style() {
+        let s = vec![
+            Span::styled(
+                "abc",
+                Style::default()
+                    .fg(Color::Blue)
+                    .bg(Color::Black)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                "def",
+                Style::default()
+                    .fg(Color::Green)
+                    .bg(Color::Cyan)
+                    .add_modifier(Modifier::ITALIC),
+            ),
+            Span::styled(
+                "ghi",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .bg(Color::Magenta)
+                    .add_modifier(Modifier::BOLD),
+            ),
+        ];
+        let not_matched_style = Style::default().fg(Color::DarkGray);
+        let matched_style = Style::default().bg(Color::Yellow);
+
+        let actual = highlight_matched_text(s.clone())
+            .matched_indices(vec![1, 2, 5, 6]) // "bc", "fg"
+            .not_matched_style(not_matched_style)
+            .matched_style(matched_style)
+            .into_spans();
+
+        let expected = vec![
+            Span::styled("a", s[0].style.patch(not_matched_style)),
+            Span::styled("bc", s[0].style.patch(matched_style)),
+            Span::styled("de", s[1].style.patch(not_matched_style)),
+            Span::styled("f", s[1].style.patch(matched_style)),
+            Span::styled("g", s[2].style.patch(matched_style)),
+            Span::styled("hi", s[2].style.patch(not_matched_style)),
+        ];
+        assert_eq!(actual, expected);
+    }
 }
