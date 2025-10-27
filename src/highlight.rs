@@ -3,16 +3,19 @@ use ratatui::{
     text::Span,
 };
 
-pub fn highlight_matched_text(s: impl Into<String>) -> HigilightMatchedText {
+pub fn highlight_matched_text<'a, T>(t: T) -> HigilightMatchedText<'a>
+where
+    T: Into<Vec<Span<'a>>>,
+{
     HigilightMatchedText {
-        s: s.into(),
+        spans: t.into(),
         ..Default::default()
     }
 }
 
 #[derive(Default)]
-pub struct HigilightMatchedText {
-    s: String,
+pub struct HigilightMatchedText<'a> {
+    spans: Vec<Span<'a>>,
     matches: Vec<Range>,
     not_matched_style: Style,
     matched_style: Style,
@@ -31,7 +34,7 @@ impl Range {
     }
 }
 
-impl HigilightMatchedText {
+impl<'a> HigilightMatchedText<'a> {
     pub fn matched_indices(mut self, indices: Vec<usize>) -> Self {
         self.matches = to_ranges(indices);
         self
@@ -88,46 +91,109 @@ impl HigilightMatchedText {
     }
 
     pub fn into_spans(self) -> Vec<Span<'static>> {
-        let mut matches;
-        let (s, matches) = if let Some(e) = self.ellipsis {
-            matches = Vec::new();
-            let el = e.len();
-            let sl = self.s.len();
-            for r in &self.matches {
-                let l = sl.saturating_sub(el);
-                if l < r.end {
-                    if r.start < l {
-                        matches.push(Range::new(r.start, sl));
+        if self.spans.is_empty() {
+            return vec![];
+        }
+
+        let total_len: usize = self.spans.iter().map(|s| s.content.len()).sum();
+
+        let (matches_to_use, limit, ellipsis_s) = if let Some(ellipsis) = self.ellipsis {
+            let ellipsis_len = ellipsis.len();
+            let limit = total_len.saturating_sub(ellipsis_len);
+            let mut tmp_matches = self.matches.clone();
+
+            let mut broken = false;
+            for (i, r) in self.matches.iter().enumerate() {
+                if limit < r.end {
+                    let mut new_temp_matches = self.matches[..i].to_vec();
+                    if r.start < limit {
+                        new_temp_matches.push(Range::new(r.start, total_len));
                     } else {
-                        matches.push(Range::new(l, sl));
+                        new_temp_matches.push(Range::new(limit, total_len));
                     }
+                    tmp_matches = new_temp_matches;
+                    broken = true;
                     break;
-                } else {
-                    matches.push(*r);
                 }
             }
-            (self.s, &matches)
+
+            if broken {
+                let indices: Vec<usize> = tmp_matches.iter().flat_map(|r| r.start..r.end).collect();
+                (to_ranges(indices), limit, Some(ellipsis))
+            } else {
+                (self.matches.clone(), limit, Some(ellipsis))
+            }
         } else {
-            (self.s, &self.matches)
+            (self.matches.clone(), total_len, None)
         };
 
-        let mut spans = Vec::new();
-        let mut start = 0;
-        for range in matches {
-            if start < range.start {
-                let span = Span::styled(s[start..range.start].to_string(), self.not_matched_style);
-                spans.push(span);
+        let mut result_spans = Vec::new();
+        let mut current_pos = 0;
+
+        for span in &self.spans {
+            if current_pos >= limit {
+                break;
             }
-            let span = Span::styled(s[range.start..range.end].to_string(), self.matched_style);
-            spans.push(span);
-            start = range.end;
+            let span_len = span.content.len();
+            let effective_span_end = (current_pos + span_len).min(limit);
+
+            let original_style = span.style;
+            let mut span_cursor = 0;
+
+            while current_pos + span_cursor < effective_span_end {
+                let current_abs_pos = current_pos + span_cursor;
+
+                let next_break = find_next_break(current_abs_pos, &matches_to_use)
+                    .unwrap_or(effective_span_end)
+                    .min(effective_span_end);
+
+                let end_in_span = next_break - current_pos;
+
+                let content_slice = &span.content[span_cursor..end_in_span];
+
+                if content_slice.is_empty() {
+                    span_cursor = end_in_span;
+                    continue;
+                }
+
+                let is_matched = matches_to_use
+                    .iter()
+                    .any(|r| r.start <= current_abs_pos && current_abs_pos < r.end);
+                let style = if is_matched {
+                    original_style.patch(self.matched_style)
+                } else {
+                    original_style.patch(self.not_matched_style)
+                };
+
+                result_spans.push(Span::styled(content_slice.to_string(), style));
+                span_cursor = end_in_span;
+            }
+            current_pos += span_len;
         }
-        if !&s[start..].is_empty() {
-            let span = Span::styled(s[start..].to_string(), self.not_matched_style);
-            spans.push(span);
+
+        if let Some(ellipsis) = ellipsis_s {
+            let ellipsis_start_pos = limit;
+            let is_matched = matches_to_use
+                .iter()
+                .any(|r| r.start <= ellipsis_start_pos && ellipsis_start_pos < r.end);
+            let style = if is_matched {
+                self.matched_style
+            } else {
+                self.not_matched_style
+            };
+            result_spans.push(Span::styled(ellipsis, style));
         }
-        spans
+
+        result_spans
     }
+}
+
+fn find_next_break(pos: usize, matches: &[Range]) -> Option<usize> {
+    matches
+        .iter()
+        .flat_map(|r| [r.start, r.end])
+        .filter(|&b| b > pos)
+        .min()
 }
 
 fn to_ranges(indices: Vec<usize>) -> Vec<Range> {
@@ -180,7 +246,7 @@ mod tests {
     #[test]
     fn test_highlight_matched_text_matched_indices() {
         let s = "abcdefghijklmn";
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(vec![s.into()])
             .matched_indices(vec![2, 3, 4, 7, 9, 10]) // "cde", "h", "jk"
             .into_spans();
         let expected = vec![
@@ -198,7 +264,7 @@ mod tests {
     #[test]
     fn test_highlight_matched_text_matched_range() {
         let s = "abcdef";
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(vec![s.into()])
             .matched_range(2, 4) // "cd"
             .into_spans();
         let expected = vec![Span::raw("ab"), Span::raw("cd"), Span::raw("ef")];
@@ -215,7 +281,7 @@ mod tests {
             .fg(Color::Yellow)
             .bg(Color::Blue)
             .add_modifier(Modifier::BOLD);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(vec![s.into()])
             .matched_indices(vec![0, 1, 5]) // "ab", "f"
             .not_matched_style(not_matched_style)
             .matched_style(matched_style)
@@ -233,7 +299,7 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(vec![s.into()])
             .matched_indices(vec![3, 4, 5]) // "def"
             .not_matched_style(not_matched_style)
             .matched_style(matched_style)
@@ -252,7 +318,7 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(vec![s.into()])
             .matched_indices(vec![3, 4, 5, 6]) // "def."
             .not_matched_style(not_matched_style)
             .matched_style(matched_style)
@@ -260,7 +326,8 @@ mod tests {
             .into_spans();
         let expected = vec![
             Span::styled("abc", not_matched_style),
-            Span::styled("def...", matched_style),
+            Span::styled("def", matched_style),
+            Span::styled("...", matched_style),
         ];
         assert_eq!(actual, expected);
     }
@@ -270,7 +337,7 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(vec![s.into()])
             .matched_indices(vec![0, 1, 7, 10, 11]) // "ab", ".", "??"
             .not_matched_style(not_matched_style)
             .matched_style(matched_style)
@@ -289,7 +356,7 @@ mod tests {
         let s = "abcdef...";
         let not_matched_style = Style::default();
         let matched_style = Style::default().fg(Color::Red);
-        let actual = highlight_matched_text(s)
+        let actual = highlight_matched_text(vec![s.into()])
             .matched_indices(vec![3, 4, 5, 9, 10, 11]) // "def", "???"
             .not_matched_style(not_matched_style)
             .matched_style(matched_style)
