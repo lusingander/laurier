@@ -3,7 +3,7 @@ use ratatui::{
     text::Span,
 };
 
-pub fn truncate_spans<'a>(spans: Vec<Span<'a>>, max_width: usize) -> TruncateSpans<'a> {
+pub fn truncate_spans(spans: Vec<Span<'_>>, max_width: usize) -> TruncateSpans<'_> {
     TruncateSpans {
         spans,
         max_width,
