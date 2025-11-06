@@ -172,14 +172,25 @@ impl<'a> HigilightMatchedText<'a> {
         }
 
         if let Some(ellipsis) = ellipsis_s {
+            let mut ellipsis_base_style = Style::default();
+            let mut pos = 0;
+            for span in &self.spans {
+                let span_end = pos + span.content.len();
+                if span_end > limit {
+                    ellipsis_base_style = span.style;
+                    break;
+                }
+                pos = span_end;
+            }
+
             let ellipsis_start_pos = limit;
             let is_matched = matches_to_use
                 .iter()
                 .any(|r| r.start <= ellipsis_start_pos && ellipsis_start_pos < r.end);
             let style = if is_matched {
-                self.matched_style
+                ellipsis_base_style.patch(self.matched_style)
             } else {
-                self.not_matched_style
+                ellipsis_base_style.patch(self.not_matched_style)
             };
             result_spans.push(Span::styled(ellipsis, style));
         }
