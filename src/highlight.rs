@@ -431,4 +431,58 @@ mod tests {
         ];
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn test_highlight_with_spans_with_style_with_ellipsis() {
+        let s = vec![
+            Span::styled(
+                "abc",
+                Style::default()
+                    .fg(Color::Blue)
+                    .bg(Color::Black)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                "def",
+                Style::default()
+                    .fg(Color::Green)
+                    .bg(Color::Cyan)
+                    .add_modifier(Modifier::ITALIC),
+            ),
+            Span::styled(
+                "ghi",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .bg(Color::Magenta)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                "...",
+                Style::default()
+                    .fg(Color::Red)
+                    .bg(Color::White)
+                    .add_modifier(Modifier::UNDERLINED),
+            ),
+        ];
+        let not_matched_style = Style::default().fg(Color::DarkGray);
+        let matched_style = Style::default().bg(Color::Yellow);
+
+        let actual = highlight_matched_text(s.clone())
+            .matched_indices(vec![3, 5, 8, 9, 10]) // "d", "f", "i", ".."
+            .not_matched_style(not_matched_style)
+            .matched_style(matched_style)
+            .ellipsis("...")
+            .into_spans();
+
+        let expected = vec![
+            Span::styled("abc", s[0].style.patch(not_matched_style)),
+            Span::styled("d", s[1].style.patch(matched_style)),
+            Span::styled("e", s[1].style.patch(not_matched_style)),
+            Span::styled("f", s[1].style.patch(matched_style)),
+            Span::styled("gh", s[2].style.patch(not_matched_style)),
+            Span::styled("i", s[2].style.patch(matched_style)),
+            Span::styled("...", s[3].style.patch(matched_style)),
+        ];
+        assert_eq!(actual, expected);
+    }
 }
