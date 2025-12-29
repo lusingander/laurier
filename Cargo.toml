@@ -14,7 +14,7 @@ categories = []
 rust-version = "1.82.0"
 
 [dependencies]
-console = "0.16.1"
+console = "0.16.2"
 ratatui-core = "0.1.0"
 ratatui-crossterm = "0.1.0"
 ratatui-widgets = "0.3.0"
