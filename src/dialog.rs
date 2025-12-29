@@ -1,9 +1,10 @@
-use ratatui::{
+use ratatui_core::{
     buffer::Buffer,
     layout::{Margin, Rect},
     style::{Color, Stylize},
-    widgets::{Block, Clear, Widget},
+    widgets::Widget,
 };
+use ratatui_widgets::{block::Block, clear::Clear};
 
 type DialogContent<'a> = Box<dyn FnOnce(Rect, &mut Buffer) + 'a>;
 

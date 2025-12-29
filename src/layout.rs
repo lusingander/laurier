@@ -1,4 +1,4 @@
-use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui_core::layout::{Constraint, Layout, Rect};
 
 pub fn calc_centered_area(base_area: Rect, area_width: u16, area_height: u16) -> Rect {
     let vertical_pad = base_area.height.saturating_sub(area_height) / 2;

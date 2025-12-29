@@ -1,4 +1,4 @@
-use ratatui::{
+use ratatui_core::{
     style::{Color, Modifier, Style},
     text::Span,
 };
@@ -237,7 +237,7 @@ fn sort_and_dedup(mut indices: Vec<usize>) -> Vec<usize> {
 
 #[cfg(test)]
 mod tests {
-    use ratatui::style::{Color, Modifier};
+    use ratatui_core::style::{Color, Modifier};
     use rstest::*;
 
     use super::*;
