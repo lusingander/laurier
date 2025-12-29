@@ -34,7 +34,7 @@ impl Range {
     }
 }
 
-impl<'a> HigilightMatchedText<'a> {
+impl HigilightMatchedText<'_> {
     pub fn matched_indices(mut self, indices: Vec<usize>) -> Self {
         self.matches = to_ranges(indices);
         self
