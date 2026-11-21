@@ -1,28 +1,28 @@
 #[macro_export]
 macro_rules! key_code {
     ( $code:pat ) => {
-        ratatui_crossterm::crossterm::event::KeyEvent { code: $code, .. }
+        $crate::crossterm::event::KeyEvent { code: $code, .. }
     };
 }
 
 #[macro_export]
 macro_rules! key_code_char {
     ( $c:ident ) => {
-        ratatui_crossterm::crossterm::event::KeyEvent {
-            code: ratatui_crossterm::crossterm::event::KeyCode::Char($c),
+        $crate::crossterm::event::KeyEvent {
+            code: $crate::crossterm::event::KeyCode::Char($c),
             ..
         }
     };
     ( $c:expr ) => {
-        ratatui_crossterm::crossterm::event::KeyEvent {
-            code: ratatui_crossterm::crossterm::event::KeyCode::Char($c),
+        $crate::crossterm::event::KeyEvent {
+            code: $crate::crossterm::event::KeyCode::Char($c),
             ..
         }
     };
     ( $c:expr, Ctrl ) => {
-        ratatui_crossterm::crossterm::event::KeyEvent {
-            code: ratatui_crossterm::crossterm::event::KeyCode::Char($c),
-            modifiers: ratatui_crossterm::crossterm::event::KeyModifiers::CONTROL,
+        $crate::crossterm::event::KeyEvent {
+            code: $crate::crossterm::event::KeyCode::Char($c),
+            modifiers: $crate::crossterm::event::KeyModifiers::CONTROL,
             ..
         }
     };
@@ -30,7 +30,7 @@ macro_rules! key_code_char {
 
 #[cfg(test)]
 mod tests {
-    use ratatui_crossterm::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
     #[test]
     fn test_key_code() {
