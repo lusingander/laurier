@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 keywords = []
 categories = []
-rust-version = "1.86.0"
+rust-version = "1.88.0"
 
 [dependencies]
 console = "0.16"
