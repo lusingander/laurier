@@ -67,6 +67,7 @@ fn outer_rect(r: Rect, margin: Margin) -> Rect {
 #[cfg(test)]
 mod tests {
     use ratatui_core::{
+        buffer::CellDiffOption,
         style::{Modifier, Style},
         text::Span,
     };
@@ -83,7 +84,7 @@ mod tests {
                 .bg(Color::Green)
                 .add_modifier(Modifier::BOLD),
         );
-        buffer[(1, 1)].set_skip(true);
+        buffer[(1, 1)].set_diff_option(CellDiffOption::Skip);
 
         Dialog::new(Span::styled("ok", Style::default().fg(Color::Yellow)))
             .margin(Margin::new(1, 1))
